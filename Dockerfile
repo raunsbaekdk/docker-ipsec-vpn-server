@@ -1,5 +1,5 @@
 FROM debian:stretch
-MAINTAINER Jordi Gimenez <info@mobilejazz.com>
+MAINTAINER Mike
 
 ENV REFRESHED_AT 2018-03-26
 ENV SWAN_VER 3.23

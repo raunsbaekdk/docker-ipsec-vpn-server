@@ -1,3 +1,3 @@
 #!/bin/sh
 
-docker exec -i -t ipsec-vpn-server /opt/src/lsusers.sh
+grep -v '^#' /etc/ppp/chap-secrets | cut -d' ' -f1 | cut -d'"' -f2
