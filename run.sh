@@ -46,21 +46,30 @@ ip link delete dummy0 >/dev/null 2>&1
 
 mkdir -p /opt/src
 
+# Run post up script
+if [ -f /pre-up.sh ]; then
+  echo
+  echo "Retrieving VPN environment variables..."
+  . /pre-up.sh
+fi
+
 # Remove whitespace and quotes around VPN variables, if any
 VPN_IPSEC_PSK="$(awk '{print $5}' /etc/ipsec.secrets | cut -d'"' -f2)"
+VPN_IPSEC_PSK="$(nospaces "$VPN_IPSEC_PSK")"
+VPN_IPSEC_PSK="$(noquotes "$VPN_IPSEC_PSK")"
 
 if [ -z "$VPN_IPSEC_PSK" ]; then
   VPN_IPSEC_PSK="$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 16)"
   echo "Generated PSK: $VPN_IPSEC_PSK"
 fi
 
-VPN_IPSEC_PSK="$(nospaces "$VPN_IPSEC_PSK")"
-VPN_IPSEC_PSK="$(noquotes "$VPN_IPSEC_PSK")"
+if printf '%s' "$VPN_IPSEC_PSK" | LC_ALL=C grep -q '[^ -~]\+'; then
+  exiterr "VPN credentials must not contain non-ASCII characters."
+fi
 
 case "$VPN_IPSEC_PSK" in
   *[\\\"\']*)
-    exiterr "VPN credentials must not contain these special characters: \\ \" '"
-    ;;
+  exiterr "VPN credentials must not contain these special characters: \\ \" '"
 esac
 
 echo
@@ -229,7 +238,8 @@ modprobe af_key
 mkdir -p /var/run/pluto /var/run/xl2tpd
 rm -f /var/run/pluto/pluto.pid /var/run/xl2tpd.pid
 
-[ -f /pre-up.sh ] && /pre-up.sh
-
 /usr/local/sbin/ipsec start --config /etc/ipsec.conf
 exec /usr/sbin/xl2tpd -D -c /etc/xl2tpd/xl2tpd.conf
+
+# Run post up script
+[ -f /post-up.sh ] && . /post-up.sh
