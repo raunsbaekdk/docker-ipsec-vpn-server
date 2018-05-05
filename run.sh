@@ -232,6 +232,27 @@ iptables -t nat -I POSTROUTING -s "$L2TP_NET" -o eth+ -j MASQUERADE
 # Update file attributes
 chmod 600 /etc/ipsec.secrets /etc/ppp/chap-secrets /etc/ipsec.d/passwd
 
+cat <<EOF
+
+================================================
+
+IPsec VPN server is now ready for use!
+
+Connect to your new VPN with these details:
+
+Server IP: $PUBLIC_IP
+IPsec PSK: $VPN_IPSEC_PSK
+DNS 1: $DNS_SRV1
+DNS 2: $DNS_SRV2
+
+Write these down. You'll need them to connect!
+
+Setup VPN clients: https://git.io/vpnclients
+
+================================================
+
+EOF
+
 # Load IPsec NETKEY kernel module
 modprobe af_key
 
