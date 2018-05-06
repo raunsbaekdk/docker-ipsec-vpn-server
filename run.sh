@@ -80,11 +80,11 @@ echo 'Trying to auto discover IP of this server...'
 PUBLIC_IP=${VPN_PUBLIC_IP:-''}
 
 # Try to auto discover IP of this server
-[ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
-[ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(wget -t 3 -T 15 -qO- http://ip.tyk.nu)
+[ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(wget -t 3 -T 15 -qO- https://api.ipify.org)
+[ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(wget -t 3 -T 15 -qO- https://ip.tyk.nu)
 
 # Check IP for correct format
-check_ip "$PUBLIC_IP" || PUBLIC_IP=$(wget -t 3 -T 15 -qO- http://ipv4.icanhazip.com)
+check_ip "$PUBLIC_IP" || PUBLIC_IP=$(wget -t 3 -T 15 -qO- https://ipv4.icanhazip.com)
 check_ip "$PUBLIC_IP" || exiterr "Cannot detect this server's public IP. Define it in your 'env' file as 'VPN_PUBLIC_IP'."
 
 L2TP_NET=${VPN_L2TP_NET:-'192.168.42.0/24'}
