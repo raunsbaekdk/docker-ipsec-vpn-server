@@ -8,7 +8,7 @@
 # This file is part of IPsec VPN Docker image, available at:
 # https://github.com/hwdsl2/docker-ipsec-vpn-server
 #
-# Copyright (C) 2016-2017 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2016-2018 Lin Song <linsongui@gmail.com>
 # Based on the work of Thomas Sarlandie (Copyright 2012)
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
@@ -19,7 +19,7 @@
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-exiterr() { echo "Error: $1" >&2; exit 1; }
+exiterr()  { echo "Error: $1" >&2; exit 1; }
 nospaces() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 noquotes() { printf '%s' "$1" | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"; }
 
