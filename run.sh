@@ -254,17 +254,19 @@ Setup VPN clients: https://git.io/vpnclients
 
 EOF
 
-# Load IPsec NETKEY kernel module
+# Load IPsec kernel module
 modprobe af_key
 
 # Start services
 mkdir -p /var/run/pluto /var/run/xl2tpd
 rm -f /var/run/pluto/pluto.pid /var/run/xl2tpd.pid
 
+# Specific Alpine
 /usr/sbin/ipsec --checknss
 /usr/sbin/ipsec --checknflog
 /usr/sbin/ipsec _plutorun --config /etc/ipsec.conf &
 
+# Start xl2tpd
 exec /usr/sbin/xl2tpd -D -c /etc/xl2tpd/xl2tpd.conf
 
 # Run post up script
