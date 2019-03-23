@@ -19,6 +19,9 @@ COPY ./adduser.sh /opt/src/adduser.sh
 COPY ./lsusers.sh /opt/src/lsusers.sh
 COPY ./rmuser.sh /opt/src/rmuser.sh
 
+# Copy resolv file
+COPY resolv.conf /etc/resolv.conf
+
 # Set permissions
 RUN chmod 755 /opt/src/run.sh /opt/src/adduser.sh /opt/src/lsusers.sh /opt/src/rmuser.sh
 
