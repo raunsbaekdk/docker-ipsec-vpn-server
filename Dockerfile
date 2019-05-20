@@ -34,5 +34,8 @@ EXPOSE 500:500/udp 4500:4500/udp
 # Mount volumnes
 VOLUME ["/lib/modules", "/etc/ppp/chap-secrets", "/etc/ipsec.d/passwd", "/etc/ipsec.secrets"]
 
+# Start dnsmasq
+CMD ["dnsmasq"]
+
 # Start
 CMD ["/opt/src/run.sh"]
