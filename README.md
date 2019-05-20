@@ -35,7 +35,8 @@ Steps:
 3. ```chmod 755 *.sh```
 4. ```./adduser.sh user```
 5. ```echo "VPN_DNS_SRV1=8.8.8.8 VPN_DNS_SRV2=8.8.4.4" > etc/pre-up.sh```
-6. ```./start.sh```
+6. ```echo "nameserver 127.0.0.53" > etc/resolv.conf```
+7. ```./start.sh```
 
 Remember to change to your own DNS servers.
 
