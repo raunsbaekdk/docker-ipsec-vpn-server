@@ -20,10 +20,8 @@ COPY ./lsusers.sh /opt/src/lsusers.sh
 COPY ./rmuser.sh /opt/src/rmuser.sh
 
 # Copy dnsmasq configs
-COPY ./conf/resolv.conf /etc/resolv.conf
 COPY ./conf/dnsmasq.conf /etc/dnsmasq.conf
 COPY ./conf/resolv-upstream.conf /opt/src/resolv-upstream.conf
-COPY ./conf/hosts.blocked /opt/src/hosts.blocked
 
 # Set permissions
 RUN chmod 755 /opt/src/run.sh /opt/src/adduser.sh /opt/src/lsusers.sh /opt/src/rmuser.sh
