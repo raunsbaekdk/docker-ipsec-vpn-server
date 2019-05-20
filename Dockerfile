@@ -8,7 +8,7 @@ MAINTAINER Mike
 WORKDIR /opt/src
 
 # Install dep packge , Configure,make and install strongSwan
-RUN apk --no-cache --update add wget bash iproute2 iptables openssl kmod libreswan xl2tpd ipsec-tools \
+RUN apk --no-cache --update add wget bash iproute2 iptables openssl kmod libreswan xl2tpd ipsec-tools dnsmasq \
   && rm -f /etc/ppp/chap-secrets /etc/ipsec.d/passwd /etc/ipsec.secrets
 
 # Copy start file
@@ -18,6 +18,12 @@ COPY ./run.sh /opt/src/run.sh
 COPY ./adduser.sh /opt/src/adduser.sh
 COPY ./lsusers.sh /opt/src/lsusers.sh
 COPY ./rmuser.sh /opt/src/rmuser.sh
+
+# Copy dnsmasq configs
+COPY ./conf/resolv.conf /etc/resolv.conf
+COPY ./conf/dnsmasq.conf /etc/dnsmasq.conf
+COPY ./conf/resolv-upstream.conf /opt/src/resolv-upstream.conf
+COPY ./conf/hosts.blocked /opt/src/hosts.blocked
 
 # Set permissions
 RUN chmod 755 /opt/src/run.sh /opt/src/adduser.sh /opt/src/lsusers.sh /opt/src/rmuser.sh
