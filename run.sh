@@ -8,7 +8,7 @@
 # This file is part of IPsec VPN Docker image, available at:
 # https://github.com/hwdsl2/docker-ipsec-vpn-server
 #
-# Copyright (C) 2016-2018 Lin Song <linsongui@gmail.com>
+# Copyright (C) 2016-2020 Lin Song <linsongui@gmail.com>
 # Based on the work of Thomas Sarlandie (Copyright 2012)
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
@@ -21,7 +21,9 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 exiterr()  { echo "Error: $1" >&2; exit 1; }
 nospaces() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+onespace() { printf '%s' "$1" | tr -s ' '; }
 noquotes() { printf '%s' "$1" | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"; }
+noquotes2() { printf '%s' "$1" | sed -e 's/" "/ /g' -e "s/' '/ /g"; }
 
 check_ip() {
   IP_REGEX='^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
@@ -55,12 +57,11 @@ fi
 
 # Remove whitespace and quotes around VPN variables, if any
 VPN_IPSEC_PSK="$(awk '{print $5}' /etc/ipsec.secrets | cut -d'"' -f2)"
-VPN_IPSEC_PSK="$(nospaces "$VPN_IPSEC_PSK")"
-VPN_IPSEC_PSK="$(noquotes "$VPN_IPSEC_PSK")"
+VPN_IPSEC_PSK=$(nospaces "$VPN_IPSEC_PSK")
+VPN_IPSEC_PSK=$(noquotes "$VPN_IPSEC_PSK")
 
-if [ -z "$VPN_IPSEC_PSK" ]; then
-  VPN_IPSEC_PSK="$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 16)"
-  echo "Generated PSK: $VPN_IPSEC_PSK"
+if [ -z "$VPN_IPSEC_PSK" ] ; then
+  exiterr "All VPN credentials must be specified. Edit your 'env' file and re-enter them."
 fi
 
 if printf '%s' "$VPN_IPSEC_PSK" | LC_ALL=C grep -q '[^ -~]\+'; then
@@ -69,7 +70,8 @@ fi
 
 case "$VPN_IPSEC_PSK" in
   *[\\\"\']*)
-  exiterr "VPN credentials must not contain these special characters: \\ \" '"
+    exiterr "VPN credentials must not contain these special characters: \\ \" '"
+    ;;
 esac
 
 echo
@@ -80,7 +82,7 @@ echo 'Trying to auto discover IP of this server...'
 PUBLIC_IP=${VPN_PUBLIC_IP:-''}
 
 # Try to auto discover IP of this server
-[ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(wget -t 3 -T 15 -qO- https://api.ipify.org)
+[ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(wget -t 3 -T 15 -qO- https://api.ipify.me)
 [ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(wget -t 3 -T 15 -qO- https://ip.tyk.nu)
 
 # Check IP for correct format
@@ -94,6 +96,17 @@ XAUTH_NET=${VPN_XAUTH_NET:-'192.168.43.0/24'}
 XAUTH_POOL=${VPN_XAUTH_POOL:-'192.168.43.10-192.168.43.250'}
 DNS_SRV1=${VPN_DNS_SRV1:-'8.8.8.8'}
 DNS_SRV2=${VPN_DNS_SRV2:-'8.8.4.4'}
+DNS_SRVS="\"$DNS_SRV1 $DNS_SRV2\""
+[ -n "$VPN_DNS_SRV1" ] && [ -z "$VPN_DNS_SRV2" ] && DNS_SRVS="$DNS_SRV1"
+
+case $VPN_SHA2_TRUNCBUG in
+  [yY][eE][sS])
+    SHA2_TRUNCBUG=yes
+    ;;
+  *)
+    SHA2_TRUNCBUG=no
+    ;;
+esac
 
 # Create IPsec (Libreswan) config
 cat > /etc/ipsec.conf <<EOF
@@ -117,9 +130,10 @@ conn shared
   dpddelay=30
   dpdtimeout=120
   dpdaction=clear
-  ike=3des-sha1,3des-sha2,aes-sha1,aes-sha1;modp1024,aes-sha2,aes-sha2;modp1024,aes256-sha2_512
-  phase2alg=3des-sha1,3des-sha2,aes-sha1,aes-sha2,aes256-sha2_512
-  sha2-truncbug=yes
+  ikev2=never
+  ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
+  phase2alg=aes_gcm-null,aes128-sha1,aes256-sha1,aes256-sha2_512,aes128-sha2,aes256-sha2
+  sha2-truncbug=$SHA2_TRUNCBUG
 
 conn l2tp-psk
   auto=add
@@ -133,8 +147,7 @@ conn xauth-psk
   auto=add
   leftsubnet=0.0.0.0/0
   rightaddresspool=$XAUTH_POOL
-  modecfgdns1="$DNS_SRV1"
-  modecfgdns2="$DNS_SRV2"
+  modecfgdns=$DNS_SRVS
   leftxauthserver=yes
   rightxauthclient=yes
   leftmodecfgserver=yes
@@ -142,7 +155,6 @@ conn xauth-psk
   modecfgpull=yes
   xauthby=file
   ike-frag=yes
-  ikev2=never
   cisco-unity=yes
   also=shared
 EOF
@@ -177,8 +189,6 @@ cat > /etc/ppp/options.xl2tpd <<EOF
 +mschap-v2
 ipcp-accept-local
 ipcp-accept-remote
-ms-dns $DNS_SRV1
-ms-dns $DNS_SRV2
 noccp
 auth
 mtu 1280
@@ -187,7 +197,29 @@ proxyarp
 lcp-echo-failure 4
 lcp-echo-interval 30
 connect-delay 5000
+ms-dns $DNS_SRV1
 EOF
+
+if [ -z "$VPN_DNS_SRV1" ] || [ -n "$VPN_DNS_SRV2" ]; then
+cat >> /etc/ppp/options.xl2tpd <<EOF
+ms-dns $DNS_SRV2
+EOF
+fi
+
+# Set users
+while read p; do
+  username=$(printf '%s' "$p" | cut -d ' ' -f 1 | sed -e 's/^"//' -e 's/"$//')
+  password=$(printf '%s' "$p" | cut -d ' ' -f 2 | sed -e 's/^"//' -e 's/"$//')
+  password_enc=$(openssl passwd -1 "$password")
+
+cat >> /etc/ppp/chap-secrets <<EOF
+"$username" l2tpd "$password" *
+EOF
+
+cat >> /etc/ipsec.d/passwd <<EOF
+$username:$password_enc:xauth-psk
+EOF
+done < /etc/ipsec.users
 
 # Update sysctl settings
 SYST='/sbin/sysctl -e -q -w'
