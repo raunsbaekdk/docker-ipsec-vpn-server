@@ -3,7 +3,7 @@ version = "1.0.8"
 
 # list of sources to pull blocklists from, stores them in ./sources
 sources = [
-"https://gist.githubusercontent.com/raunsbaekdk/09dc9a99f934f421dd769835923a0296/raw/d3de9216c0d3c8ffca8ac2c98aea17d06c47ed54/dnsfilter.txt"
+"https://gist.githubusercontent.com/raunsbaekdk/09dc9a99f934f421dd769835923a0296/raw/696be79f3fb9c3b3a947f1c2ea9f3d5f918c9adb/dnsfilter.txt"
 ]
 
 # list of locations to recursively read blocklists from (warning, every file found is assumed to be a hosts-file or domain list)
